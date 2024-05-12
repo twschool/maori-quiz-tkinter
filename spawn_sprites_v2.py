@@ -1,4 +1,5 @@
-"""A Simple module to spawn the player on the screen 
+"""v2 of the spawn sprites module
+A Simple module to spawn the player on the screen 
 using arrow keys to rotate / move the player"""
 
 import pygame

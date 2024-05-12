@@ -1,4 +1,5 @@
-"""A Simple module to spawn a sprite on the screen"""
+"""v1 of the spawn sprites module
+A Simple module to spawn a sprite on the screen"""
 
 import pygame
 
