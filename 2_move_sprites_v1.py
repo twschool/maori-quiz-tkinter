@@ -1,9 +1,9 @@
 """
-v3 of the spawn sprites module
-A Simple module to spawn the player on the screen 
-using arrow keys to move the player rotation has been removed.
-
-A Looping background has been added to the screen to give the illusion of movement."""
+v1 of the move sprites module
+A Simple module to move the sprites around the screen.
+The code from 1_spawn_sprites_v3 has been taken as the movement cannot be tested without the sprites spawning on the screen.
+You have to manually press the key each time you want it to move holding is not yet supported
+"""
 
 import pygame
 
@@ -25,9 +25,9 @@ class Coordinate:
 class Player(Coordinate):
     def __init__(self, color):
         # Initiate the coordinate class
-        super().__init__(100, 100)
+        super().__init__(100, 500)
         
-        
+
         self.color = color
         image = pygame.image.load(get_player_filename(color))
         
@@ -43,6 +43,16 @@ class Player(Coordinate):
     def get_coords(self):
         """Return the x, y coords as a tuple (x, y)"""
         return self.format()
+
+def make_background_object() -> pygame.Surface:
+    # Define all background related variables
+    background_image = pygame.image.load("background.png")
+    background_scale_x =  DISPLAY_SIZE[0] / background_image.get_width()
+    background_scale_y =  (DISPLAY_SIZE[1] * 2) / background_image.get_height()
+    new_background_image = pygame.transform.scale(background_image, (int(background_image.get_width() * background_scale_x)
+                                                            , int(background_image.get_height() * background_scale_y)))
+    return new_background_image
+
 
 
 def background():
@@ -74,7 +84,7 @@ def background():
     screen.blit(background_image, background_coords[1].format())
     
 
-def player(player_object: Player):
+def update_player(player_object: Player):
     """Draw the player image on the screen"""
     
     screen.blit(player_object.image, player_object.get_coords())
@@ -85,19 +95,12 @@ pygame.init()
 pygame.display.set_caption('Test sprites!')
 screen = pygame.display.set_mode(DISPLAY_SIZE)
 
-# Define all constants and variables
-player_velocity = 0
-velocity = Coordinate(0, 0) # Store the players velocity as a coordinate x,y
+
 player_coords = Coordinate(100, 100)
 
-# Define all background related variables
 background_coords: list[Coordinate] = [Coordinate(0, 0), Coordinate(0, -700)]
-background_image = pygame.image.load("background.png")
-background_scale_x =  DISPLAY_SIZE[0] / background_image.get_width()
-background_scale_y =  (DISPLAY_SIZE[1] * 2) / background_image.get_height()
-background_image = pygame.transform.scale(background_image, (int(background_image.get_width() * background_scale_x)
-                                                         , int(background_image.get_height() * background_scale_y)))
 
+background_image = make_background_object()
 new_background_image_height = background_image.get_height()
 fps = 60
 
@@ -121,14 +124,13 @@ player_image_global = pygame.image.load( get_player_filename("red") )
 finished = False
 player_object = Player("blue")
 
-
 # Main loop
 while not finished:
 
     clock = pygame.time.Clock()
     screen.fill((0, 0, 0))
     background()
-    player(player_object)
+    update_player(player_object)
     
     pygame.display.update()
     clock.tick(fps)
@@ -139,16 +141,17 @@ while not finished:
         print(event.dict)
         if event.type == pygame.QUIT:
             pygame.quit()
+
+        # For debugging purposes
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            print(event.dict["pos"])
+        
         elif event.type == pygame.KEYDOWN:
             # Player movement (horizontal only for now)
+            # TODO: Make code work with holding down the keys not just pressing them
             if event.key == pygame.K_LEFT or event.key == pygame.K_a:
                 player_object.x -= 20
             elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                 player_object.x += 20
-
             
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            print(event.dict["pos"])
-            
-            
-# Mr baker
+            player_object.x
