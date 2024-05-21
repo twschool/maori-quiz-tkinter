@@ -20,7 +20,6 @@ class Coordinate:
         """Returns the players formatted coordinates (x, y) as a tuple"""
         return (self.x, self.y)
 
-
 class Player(Coordinate):
     def __init__(self, color):
         # Initiate the coordinate class
