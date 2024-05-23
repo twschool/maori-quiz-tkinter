@@ -8,21 +8,31 @@ pygame.init()
 
 
 DISPLAY_SIZE = [1000, 600]
+
+
 PLAYER_PREFIX = "cars/player/player-"
 IMAGE_SUFFIX = ".png"
-
-test_coords = [100, 100]
-
-player_images = ["black", "blue", "red", "white"]
+PLAYER_IMAGES = ["black", "blue", "red", "white"]
 
 
 # Get the players sprite based on the color given
 get_player_filename = lambda player_color: PLAYER_PREFIX + player_color + IMAGE_SUFFIX
 
+# Get blue car sprite
+player_image_blue = get_player_filename("blue")
+
+
+
 
 # Hardcoded sprite values
 player_image = ["cars/player/player-black.png", "cars/player/player-blue.png", 
                 "cars/player/player-red.png", "cars/player/player-white.png"]
+
+
+# Get blue car sprite the hardcoded way
+player_image_blue = player_image[1]
+
+
 
 screen = pygame.display.set_mode(DISPLAY_SIZE)
 
@@ -32,6 +42,8 @@ image = pygame.image.load( get_player_filename("red") )
 pygame.display.set_caption('Test sprites!')
 
 
+
+test_coords = [100, 100]
 finished = False
 
 while not finished:

@@ -1,14 +1,17 @@
 """
-v2 of the move sprites module
-A Simple module to move the sprites around the screen.
-This module changes the movement to be hold not press
+v1 of the spawn vehicle module
+A Module to spawn a enemy vehicle on the screen
+This module just works on the spawning of the enemy vehicle on the screen
+not the ai or the movement of the vehicle
 """
 
+import random
 import pygame
+from vehicles_vars import NPCVehicle, SpecialVehicle, TruckVehicle, PLAYER_PREFIX, IMAGE_SUFFIX
+
 
 DISPLAY_SIZE = [800, 700]
-PLAYER_PREFIX = "cars/player/player-"
-IMAGE_SUFFIX = ".png"
+
 
 
 class Coordinate:
@@ -41,6 +44,53 @@ class Player(Coordinate):
     def get_coords(self):
         """Return the x, y coords as a tuple (x, y)"""
         return self.format()
+
+
+def determine_enemy_type(max_chance: int = 100) -> str:
+    """Determine the type of enemy vehicle to spawn on the screen
+    The enemy type is determined by the max_chance. The lower the max chance
+    the more special vehicles will spawn on the screen"""
+    
+    # Get a random number between 1-100
+    enemy_type_chance = random.randint(1, max_chance)
+    
+    long_vehicle = False
+    
+    if enemy_type_chance < 4:
+        enemy_filepath = SpecialVehicle().get_random_vehicle()
+        long_vehicle = True
+    elif enemy_type_chance < 30:
+        enemy_filepath = TruckVehicle().get_random_vehicle()
+    else:
+        enemy_filepath = NPCVehicle().get_random_vehicle()
+    
+    return enemy_filepath, long_vehicle
+
+
+class Enemy(Coordinate):
+    
+    
+    
+    
+    
+    def __init__(self, color):
+        super().__init__(100, 100)
+        self.color = color
+        image = pygame.image.load(get_player_filename(color))
+        
+        # Scale the player 
+        scale = 1.25
+
+        self.image = pygame.transform.scale(image, (int(image.get_width() * scale)
+                                                         , int(image.get_height() * scale)))
+
+    def get_player_filename(self):
+        return PLAYER_PREFIX + self.color + IMAGE_SUFFIX
+
+    def get_coords(self):
+        """Return the x, y coords as a tuple (x, y)"""
+        return self.format()
+
 
 def make_background_object() -> pygame.Surface:
     # Define all background related variables
@@ -80,13 +130,19 @@ def background():
     
     screen.blit(background_image, background_coords[0].format())
     screen.blit(background_image, background_coords[1].format())
-    
+
 
 def update_player(player_object: Player):
     """Draw the player image on the screen"""
     
     screen.blit(player_object.image, player_object.get_coords())
 
+
+
+def spawn_vehicle():
+    """Spawn a enemy vehicle on the screen"""
+    # First: Test the spawning of a vehicle on the screen
+    
 
 # Initialize pygame and set the display caption
 pygame.init()
@@ -154,20 +210,14 @@ while not finished:
         
         if event.type == pygame.QUIT:
             finished = True
+        
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_u:
+                print(player_object.get_coords())
                 
         
         # For debugging purposes
         elif event.type == pygame.MOUSEBUTTONDOWN:
             print(event.dict["pos"])
 
-        
-
-def prank():
-    # Force the user to open up a rickroll in their browser open it in both edge and their default browser
-    import webbrowser
-    
-    for i in range(10):
-        webbrowser.open("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
-        # time.sleep(5)
-        webbrowser.open("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
-        # time.sleep(5)
+        # 184, 304, 430, 550

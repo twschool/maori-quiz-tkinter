@@ -22,6 +22,7 @@ class Coordinate:
         return (self.x, self.y)
 
 
+
 class Player(Coordinate):
     def __init__(self, color):
         # Initiate the coordinate class
