@@ -1,17 +1,16 @@
 """
-v1 of the spawn vehicle module
+v2 of the spawn vehicle module
 A Module to spawn a enemy vehicle on the screen
 This module just works on the spawning of the enemy vehicle on the screen
-not the ai or the movement of the vehicle.
+not the ai or the movement of the vehicle
 
-Instead of doing that I converted everything into being object orientated
-the vehicle spawning will be down in v2
+Things will be a lot easier now I have classes for everything
 """
 
 import random
 import copy
 import pygame
-from vehicles_vars import NPCVehicle, SpecialVehicle, TruckVehicle, PLAYER_PREFIX, IMAGE_SUFFIX
+from vehicles_vars import NPCVehicle, SpecialVehicle, TruckVehicle, EnemyVehicle, EnemyLanes, PLAYER_PREFIX, IMAGE_SUFFIX
 
 
 DISPLAY_SIZE = [800, 700]
@@ -100,16 +99,31 @@ class Background:
 
 class Enemy(Sprite):    
     """A class to represent the enemy vehicle on the screen"""
-    def __init__(self, color):
+    def __init__(self, enemy_vehicle: EnemyVehicle, lane_x: int):
         """Initiator"""
         
-        # Initiate the 
-        super().__init__(100, 100, pygame.image.load(self.get_enemy_filename(color)))
-        self.color = color
-        self.speed = random.randint(GameController.enemy_speed_range)
+        enemy_image = pygame.image.load(enemy_vehicle.get_random_vehicle())
+
+        # Initiate the inherited class 
+        super().__init__(lane_x, -200, enemy_image)
+        # self.speed = random.randint(GameController.enemy_speed_range)
+        
+        self.speed = global_enemy_velocity
+
+        enemy_objects.append(self)
+    
+    def move(self):
+        """Move the enemy vehicle down the screen"""
+        self.y += self.speed
+    
+    def offscreen_check(self):
+        """Check if the enemy vehicle is offscreen if it is then delete it"""
+        if self.y > DISPLAY_SIZE[1]:
+            return True
 
 
 class GameController:
+    """A class to control the game state"""
     def __init__(self, fps=60):
         self.enemy_speed_range = (1, 5)
         self.enemy_objects = []
@@ -119,21 +133,65 @@ class GameController:
         self.offscreen_limits = (-300, DISPLAY_SIZE[1] + 300)
     
     def update(self, screen: pygame.Surface, player_object: Player,
-                enemy_objects: list[Enemy]):
+                enemy_objects: list[Enemy], spawn_cooldown: int):
         
         """Update the game state"""
         
        
         player_object.show(screen)
         
-        for enemy in copy.deepcopy(enemy_objects):
-            if enemy.y > self.offscreen_limits[1]:
-                enemy_objects.remove(enemy)
+        # Move the enemy vehicles and check if they are offscreen
+        # Create a copy so nothing breaks if anything is removed
+        for enemy in enemy_objects[:]:
+            enemy.move()
 
+            # If the enemy is offscreen remove it from the list
+            if enemy.offscreen_check():
+                print("Removed enemy")
+                enemy_objects.remove(enemy)
+            else:
+                enemy.show(screen)
+
+
+        # Spawn a new enemy vehicle if the cooldown is 0
+        if spawn_cooldown <= 0:
+            let_player_rest = random.randint(0, 5)
+            if let_player_rest == 0:
+                spawn_cooldown = random.randint(fps, int(fps * 2))
+            else:
+                spawn_cooldown = random.randint(fps / 2, fps)
+            
+            spawned_enemy = self.decide_what_enemy()
+            Enemy(spawned_enemy, EnemyLanes.pick_random_lane())
+            spawn_cooldown 
+            return spawn_cooldown
+
+
+        # Change the enemy spawn cooldown if it hasnt been reset
+        spawn_cooldown -= 1
+
+        return spawn_cooldown
 
         # self.spawn_enemy()
         # self.move_enemies()
         # self.check_collision()
+    
+    def decide_what_enemy(self) -> EnemyVehicle:
+        """Spawn an enemy vehicle on the screen"""
+        
+        enemy_chance = random.randint(0, enemy_max_chance)
+
+        if enemy_chance > 5:
+            if enemy_chance % 2 == 0 and random.randint(0, 1) == 0: # 1 in 4 chance to be a truck
+                return NPCVehicle()
+            else:
+                return TruckVehicle()
+        
+        else:
+
+            return SpecialVehicle()
+                
+
     
         
 def make_background_object() -> pygame.Surface:
@@ -157,6 +215,8 @@ screen = pygame.display.set_mode(DISPLAY_SIZE)
 
 
 # Main routine
+
+global_enemy_velocity = 3
 background_image_object = make_background_object() # Used for testing purposes
 
 
@@ -170,8 +230,12 @@ y_upper_bound = background_image_object.get_height()
 
 background_object = Background()
 
+fps = 160
 
-fps = 60
+enemy_spawn_cooldown = fps * 2 # First enemy will spawn after 2 seconds
+last_lane_spawned_in = 0
+enemy_max_chance = 100
+
 finished = False
 player_object = Player("blue")
 
@@ -185,13 +249,14 @@ clock = pygame.time.Clock()
 print(f"Y upper bound: {y_upper_bound}, Y lower bound: {y_lower_bound}")
 # Main loop
 while not finished:
-
+    
     screen.fill((0, 0, 0))
     
     background_object.update_background()
     background_object.show(screen)
     
-    game_controller.update(screen, player_object, enemy_objects)
+    enemy_spawn_cooldown = game_controller.update(screen, player_object, 
+                                                  enemy_objects, enemy_spawn_cooldown)
     
     
     pygame.display.update()
@@ -230,3 +295,6 @@ while not finished:
 
 
     # When the y get to y -787
+
+
+# 190, 310, 430, 550
