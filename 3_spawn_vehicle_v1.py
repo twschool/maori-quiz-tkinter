@@ -6,6 +6,7 @@ not the ai or the movement of the vehicle
 """
 
 import random
+import copy
 import pygame
 from vehicles_vars import NPCVehicle, SpecialVehicle, TruckVehicle, PLAYER_PREFIX, IMAGE_SUFFIX
 
@@ -23,20 +24,41 @@ class Coordinate:
         """Returns the players formatted coordinates (x, y) as a tuple"""
         return (self.x, self.y)
 
-class Player(Coordinate):
-    def __init__(self, color):
-        # Initiate the coordinate class
-        super().__init__(100, 500)
-        
 
+class Sprite(Coordinate):
+    """A class to represent a sprite on the screen"""
+    
+    def __init__(self, x, y, image_object: pygame.Surface, scale=1):
+        """Initialize the sprite object with the x, y coordinates and the scaled image object"""
+        super().__init__(x, y)
+        
+        # Scales the player image object to the given scale
+        self.image_object = pygame.transform.scale(
+                                                    image_object, (
+                                                        int(image_object.get_width() * scale),
+                                                        int(image_object.get_height() * scale)
+                                                                      )
+                                                   )
+        
+    def show(self, screen: pygame.Surface):
+        """Displays the sprite on the screen"""
+        screen.blit(self.image_object, self.format())
+
+
+class Player(Sprite):
+    """A class to represent the player on the screen"""
+    def __init__(self, color):
+        image = pygame.image.load(self.get_player_filename(color))
+        
+        # Initiate the sprite class with the image object and x, y coords
+        super().__init__(image, 100, 500)
+        
         self.color = color
-        image = pygame.image.load(get_player_filename(color))
         
         # Scale the player 
         scale = 1.25
 
-        self.image = pygame.transform.scale(image, (int(image.get_width() * scale)
-                                                         , int(image.get_height() * scale)))
+        
 
     def get_player_filename(self):
         return PLAYER_PREFIX + self.color + IMAGE_SUFFIX
@@ -44,105 +66,69 @@ class Player(Coordinate):
     def get_coords(self):
         """Return the x, y coords as a tuple (x, y)"""
         return self.format()
+    
+        
+class Background(Sprite):
+    """A class to represent the background image on the screen"""
+    def __init__(self, x, y):
+        super().__init__(x, y, pygame.image.load("background.png"))
+    
+    def update_background(self):
+        self.y += 5
+        self.y += 5
+                
+                
+        if self.y >= y_lower_bound:
+            self.y = y_upper_bound
 
 
-def determine_enemy_type(max_chance: int = 100) -> str:
-    """Determine the type of enemy vehicle to spawn on the screen
-    The enemy type is determined by the max_chance. The lower the max chance
-    the more special vehicles will spawn on the screen"""
-    
-    # Get a random number between 1-100
-    enemy_type_chance = random.randint(1, max_chance)
-    
-    long_vehicle = False
-    
-    if enemy_type_chance < 4:
-        enemy_filepath = SpecialVehicle().get_random_vehicle()
-        long_vehicle = True
-    elif enemy_type_chance < 30:
-        enemy_filepath = TruckVehicle().get_random_vehicle()
-    else:
-        enemy_filepath = NPCVehicle().get_random_vehicle()
-    
-    return enemy_filepath, long_vehicle
 
-
-class Enemy(Coordinate):
-    
-    
-    
-    
-    
+class Enemy(Sprite):    
+    """A class to represent the enemy vehicle on the screen"""
     def __init__(self, color):
-        super().__init__(100, 100)
+        """Initiator"""
+        
+        # Initiate the 
+        super().__init__(100, 100, pygame.image.load(self.get_enemy_filename(color)))
         self.color = color
-        image = pygame.image.load(get_player_filename(color))
-        
-        # Scale the player 
-        scale = 1.25
-
-        self.image = pygame.transform.scale(image, (int(image.get_width() * scale)
-                                                         , int(image.get_height() * scale)))
-
-    def get_player_filename(self):
-        return PLAYER_PREFIX + self.color + IMAGE_SUFFIX
-
-    def get_coords(self):
-        """Return the x, y coords as a tuple (x, y)"""
-        return self.format()
+        self.speed = random.randint(GameController.enemy_speed_range)
 
 
-def make_background_object() -> pygame.Surface:
-    # Define all background related variables
-    background_image = pygame.image.load("background.png")
-    background_scale_x =  DISPLAY_SIZE[0] / background_image.get_width()
-    background_scale_y =  (DISPLAY_SIZE[1] * 2) / background_image.get_height()
-    new_background_image = pygame.transform.scale(background_image, (int(background_image.get_width() * background_scale_x)
-                                                            , int(background_image.get_height() * background_scale_y)))
-    return new_background_image
-
-
-
-def background():
-    """Draw the background image which slowly scrolls down the screen with seamless looping"""
+class GameController:
+    def __init__(self, player_object, fps=60):
+        self.enemy_speed_range = (1, 5)
+        self.enemy_objects = []
+        self.spawn_rate = fps * 2
+        self.next_car_spawn_interval = 0
+        self.previous_lane = 0
+        self.background_object = self.make_background_object()
+        self.offscreen_limits = (-300, DISPLAY_SIZE[1] + 300)
     
-    def move_background():
-        """Move the background down the screen with the second background image 
-        following the first to wrap around to create a seamless transition"""
-            
-        # How this will work
-        # 1. Move the background down the screen
-        # 2. Have two images working in parallel to create a seamless transition
-        # NOTE: There will only be two images in the background_coords list so we can hardcode stuff
+    def update(self, screen: pygame.Surface, player_object: Player,
+               background_objects: list[Background], enemy_objects: list[Enemy]):
         
-        background_coords[0].y += 5
-        background_coords[1].y += 5
+        """Update the game state"""
+        
+        for background_object in background_objects:
+            background_object.show(screen)
+        
+        player_object.show(screen)
+        
+        for enemy in copy.deepcopy(enemy_objects):
+            if enemy.y > self.offscreen_limits[1]:
+                enemy_objects.remove(enemy)
+       
+        self.spawn_enemy()
+        self.move_enemies()
+        self.check_collision()
+    
         
         
-        if background_coords[0].y >= y_lower_bound:
-            background_coords[0].y = y_upper_bound
-        
-        if background_coords[1].y >= y_lower_bound:
-            background_coords[1].y = y_upper_bound
-
-    
-    move_background()
-    
-    screen.blit(background_image, background_coords[0].format())
-    screen.blit(background_image, background_coords[1].format())
-
-
-def update_player(player_object: Player):
-    """Draw the player image on the screen"""
-    
-    screen.blit(player_object.image, player_object.get_coords())
 
 
 
-def spawn_vehicle():
-    """Spawn a enemy vehicle on the screen"""
-    # First: Test the spawning of a vehicle on the screen
-    
+
+
 
 # Initialize pygame and set the display caption
 pygame.init()
@@ -150,24 +136,18 @@ pygame.display.set_caption('Test sprites!')
 screen = pygame.display.set_mode(DISPLAY_SIZE)
 
 
-player_coords = Coordinate(100, 100)
 
-background_coords: list[Coordinate] = [Coordinate(0, 0), Coordinate(0, -700)]
-
-background_image = make_background_object()
-new_background_image_height = background_image.get_height()
-fps = 60
 
 
 # Defines the y upper and lower bound to give the illusion of screen wrapping for the background
-y_upper_bound = -new_background_image_height
+y_upper_bound = -Background.image.get_height()
 y_lower_bound = DISPLAY_SIZE[1]
 
-# Get the players sprite based on the color given
-player_images = ["black", "blue", "red", "white"]
-get_player_filename = lambda player_color: PLAYER_PREFIX + player_color + IMAGE_SUFFIX
+# # Get the players sprite based on the color given
+# player_images = ["black", "blue", "red", "white"]
+# get_player_filename = lambda player_color: PLAYER_PREFIX + player_color + IMAGE_SUFFIX
 
-player_image_global = pygame.image.load( get_player_filename("red") )
+# player_image_global = pygame.image.load( get_player_filename("red") )
 
 
 
@@ -175,15 +155,23 @@ player_image_global = pygame.image.load( get_player_filename("red") )
 
 # Main routine
 
+fps = 60
 finished = False
 player_object = Player("blue")
+
+
+game_controller = GameController()
+
+enemy_objects: list[Enemy] = []
 
 # Main loop
 while not finished:
 
     clock = pygame.time.Clock()
     screen.fill((0, 0, 0))
-    background()
+    
+    
+    game_controller.update(screen, player_object, background_object, enemy_objects)
     update_player(player_object)
     
     
@@ -219,5 +207,3 @@ while not finished:
         # For debugging purposes
         elif event.type == pygame.MOUSEBUTTONDOWN:
             print(event.dict["pos"])
-
-        # 184, 304, 430, 550
