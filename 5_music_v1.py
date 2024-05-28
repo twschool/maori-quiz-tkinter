@@ -34,7 +34,7 @@ play_music()
 while not finished:
     
     
-    screen.fill((0, 0, 0))
+    screen.fill((255, 120, 0))
     
     pygame.display.update()
     clock.tick(10)
