@@ -8,12 +8,12 @@ Things will be a lot easier now I have classes for everything
 """
 
 import random
-import copy
 import pygame
 from vehicles_vars import NPCVehicle, SpecialVehicle, TruckVehicle, EnemyVehicle, EnemyLanes, PLAYER_PREFIX, IMAGE_SUFFIX
 
 
 DISPLAY_SIZE = [800, 700]
+
 
 
 
@@ -53,6 +53,7 @@ class Player(Sprite):
         
         player_filename = self.get_player_filename(color)
         image = pygame.image.load(player_filename)
+        self.image = image
         
         # Initiate the sprite class with the image object and x, y coords
         super().__init__(100, 500, image, 1.25)
@@ -99,13 +100,13 @@ class Background:
 
 class Enemy(Sprite):    
     """A class to represent the enemy vehicle on the screen"""
-    def __init__(self, enemy_vehicle: EnemyVehicle, lane_x: int):
+    def __init__(self, enemy_vehicle: EnemyVehicle, lane_x: int, spawn_in_y:int = -400):
         """Initiator"""
         
         enemy_image = pygame.image.load(enemy_vehicle.get_random_vehicle())
 
         # Initiate the inherited class 
-        super().__init__(lane_x, -200, enemy_image)
+        super().__init__(lane_x, spawn_in_y, enemy_image)
         # self.speed = random.randint(GameController.enemy_speed_range)
         
         self.speed = global_enemy_velocity
@@ -132,6 +133,12 @@ class GameController:
         self.previous_lane = 0
         self.offscreen_limits = (-300, DISPLAY_SIZE[1] + 300)
     
+    
+   
+            
+            
+    
+    
     def update(self, screen: pygame.Surface, player_object: Player,
                 enemy_objects: list[Enemy], spawn_cooldown: int):
         
@@ -155,22 +162,34 @@ class GameController:
 
         # Spawn a new enemy vehicle if the cooldown is 0
         if spawn_cooldown <= 0:
-            let_player_rest = random.randint(0, 5)
+            
+            # Randomly decide if the player should rest
+            let_player_rest = random.randint(0, 9)
             if let_player_rest == 0:
                 spawn_cooldown = random.randint(fps, int(fps * 2))
             else:
                 spawn_cooldown = random.randint(int(fps / 2), fps)
             
-            spawned_enemy = self.decide_what_enemy()
-            lane_chosen = EnemyLanes.pick_random_lane()
+            spawned_enemy: EnemyVehicle = self.decide_what_enemy()
+            lane_chosen, lane_chosen_x = EnemyLanes.pick_random_lane()
 
             if lane_chosen == self.previous_lane:
-                lane_chosen = EnemyLanes.pick_random_lane()
+                # Less repetition
+                lane_chosen, lane_chosen_x = EnemyLanes.pick_random_lane()
+
+             
+            if lane_chosen == self.previous_lane + 1 or lane_chosen == lane_chosen - 1:
+                # Less chance of being softlocked or randomly trapped
+                Enemy(spawned_enemy, lane_chosen_x, spawn_in_y=-600)
+            else:
+                Enemy(spawned_enemy, lane_chosen_x)
+                
+            self.previous_lane = lane_chosen
                         
 
-            Enemy(spawned_enemy, lane_chosen)
             
-            spawn_cooldown 
+            
+            
             return spawn_cooldown
 
 
@@ -212,6 +231,13 @@ def make_background_object() -> pygame.Surface:
 
 
 
+def display_text(screen: pygame.Surface, text: str, font_color = (255, 255, 255), x = DISPLAY_SIZE[0] // 2, y = 0 + 100):
+    """Display text assuming the default x and y coords are the center top of the screen"""
+    font = main_font
+    text_object = font.render(text, True, font_color)
+    text_rect = text_object.get_rect(center=(x, y))
+    screen.blit(text_object, text_rect)
+    
 
 
 
@@ -225,6 +251,18 @@ screen = pygame.display.set_mode(DISPLAY_SIZE)
 
 global_enemy_velocity = 3
 background_image_object = make_background_object() # Used for testing purposes
+
+
+available_fonts = pygame.font.get_fonts()
+font_size = 30
+print(available_fonts)
+if "liberationmono" in available_fonts:
+    main_font = pygame.font.SysFont("liberationmono", font_size)
+else:
+    # Handle case where Liberation Mono is not found
+    print("Liberation Mono not found. Using a fallback font.")
+    # Load a fallback font (e.g., pygame default font)
+    main_font = pygame.font.Font(None, font_size)
 
 
 # Defines the y upper and lower bound to give the illusion of screen wrapping for the background
@@ -246,18 +284,21 @@ enemy_max_chance = 100
 finished = False
 player_object = Player("blue")
 
+in_menu = False
 
+sound_death = pygame.mixer.Sound("other assets/goofy-crash.wav")
+sound_game = pygame.mixer.Sound("other assets/racing_music.mp3")
 game_controller = GameController(fps)
 
 enemy_objects: list[Enemy] = []
 
 clock = pygame.time.Clock()
 
+
 print(f"Y upper bound: {y_upper_bound}, Y lower bound: {y_lower_bound}")
 # Main loop
 while not finished:
     
-    screen.fill((0, 0, 0))
     
     background_object.update_background()
     background_object.show(screen)
@@ -265,24 +306,25 @@ while not finished:
     enemy_spawn_cooldown = game_controller.update(screen, player_object, 
                                                   enemy_objects, enemy_spawn_cooldown)
     
-    
     pygame.display.update()
+    
+                
     clock.tick(fps)
     
     keys = pygame.key.get_pressed()
     if keys[pygame.K_LEFT]:
         if player_object.x + player_object.image_object.get_width() >= 220:
-            player_object.x -= 6
+            player_object.x -= 3
     if keys[pygame.K_RIGHT]:
         if player_object.x + player_object.image_object.get_width() <= DISPLAY_SIZE[0] - 150:
-            player_object.x += 6
+            player_object.x += 3
     
     if keys[pygame.K_UP]:
         if player_object.y + player_object.image_object.get_height() >= 122:
-                player_object.y -= 6
+                player_object.y -= 3
     if keys[pygame.K_DOWN]:
         if player_object.y + player_object.image_object.get_height() <= DISPLAY_SIZE[1] - 2:
-            player_object.y += 4
+            player_object.y += 2
 
    
     # Event handling

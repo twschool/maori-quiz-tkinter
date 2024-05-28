@@ -49,27 +49,7 @@ class Player(Coordinate):
 def background():
     """Draw the background image which slowly scrolls down the screen with seamless looping"""
     
-    def move_background():
-        """Move the background down the screen with the second background image 
-        following the first to wrap around to create a seamless transition"""
-            
-        # How this will work
-        # 1. Move the background down the screen
-        # 2. Have two images working in parallel to create a seamless transition
-        # NOTE: There will only be two images in the background_coords list so we can hardcode stuff
-        
-        background_coords[0].y += 5
-        background_coords[1].y += 5
-        
-        
-        if background_coords[0].y >= y_lower_bound:
-            background_coords[0].y = y_upper_bound
-        
-        if background_coords[1].y >= y_lower_bound:
-            background_coords[1].y = y_upper_bound
-
-    
-    move_background()
+   
     
     screen.blit(background_image, background_coords[0].format())
     screen.blit(background_image, background_coords[1].format())

@@ -11,13 +11,17 @@ IMAGE_SUFFIX = ".png"
 npc_images = ["black", "red", "white", "yellow"]
 special_images = ["firetruck", "limo-black", "limo-white"]
 truck_images = ["1", "2", "3", "4"]
-
+lane1_x = 190
+lane2_x = 310
+lane3_x = 430
+lane4_x = 550
 
 class EnemyVehicle:
     def __init__(self, prefix, images, suffix):
         self.prefix = prefix
         self.images = images
         self.suffix = suffix
+        self.scale = 1.25
     
     def get_random_vehicle(self):
         return self.prefix + random.choice(self.images) + self.suffix
@@ -31,6 +35,7 @@ class NPCVehicle(EnemyVehicle):
 class SpecialVehicle(EnemyVehicle):
     def __init__(self):
         super().__init__(SPECIAL_VECHICLE_PREFIX, special_images, IMAGE_SUFFIX)
+        self.scale = 1
 
 
 class TruckVehicle(EnemyVehicle):
@@ -40,7 +45,11 @@ class TruckVehicle(EnemyVehicle):
 
 class EnemyLanes:
     """A class to store the enemy lanes x coords"""
+
+    
     def __init__(self):
+        """Initialize the enemy lanes x coords
+        This part of the function is unlikely to be used in the final version"""
         self.y_range = (-30, -50)
 
         self.lane1_x = 190
@@ -49,12 +58,13 @@ class EnemyLanes:
         self.lane4_x = 550
     
     def pick_random_lane():
-        lane1_x = 190
-        lane2_x = 310
-        lane3_x = 430
-        lane4_x = 550
         """Return a random lane x coordinate"""
-        return random.choice([lane1_x, lane2_x, 
-                              lane3_x, lane4_x])
+        return random.choice([(1, lane1_x), (2, lane2_x), 
+                         (3, lane3_x), (4, lane4_x)])
+    
+    def lane_x_to_lane_number():
+        """Return the lane number based on the x coordinate"""
+        return {lane1_x: 1, lane2_x: 2, lane3_x: 3, lane4_x: 4}
+    
 
         
