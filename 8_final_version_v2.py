@@ -16,7 +16,12 @@ from vehicles_vars import NPCVehicle, SpecialVehicle, TruckVehicle, EnemyVehicle
 
 DISPLAY_SIZE = [800, 700]
 HIGHSCORE_FILENAME = "other assets/highscore.txt"
-
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+BACKGROUND_GRAY = (75, 75, 75)
+ORANGE = (255, 165, 0)
+RED = (255, 0, 0)
+NICE_RED = (255, 69, 0)
 
 
 class Coordinate:
@@ -108,7 +113,7 @@ class Enemy(Sprite):
         enemy_image = pygame.image.load(enemy_vehicle.get_random_vehicle())
 
         # Initiate the inherited class 
-        super().__init__(lane_x, spawn_in_y, enemy_image)
+        super().__init__(lane_x, spawn_in_y, enemy_image, enemy_vehicle.scale)
         # self.speed = random.randint(GameController.enemy_speed_range)
         
 
@@ -174,7 +179,6 @@ class GameController:
             if enemy.offscreen_check():
                 if (score + 1) % 10 == 0:
                     global_enemy_velocity *= 1.2
-                    print(f"New velocity: {global_enemy_velocity}")
                 score += 1
                 enemy_objects.remove(enemy)
             else:
@@ -188,14 +192,11 @@ class GameController:
             let_player_rest = random.randint(0, 9)
             if let_player_rest == 0:
                 ratioed_framerate = fps / (global_enemy_velocity / original_enemy_velocity)
-                # print(f"{int(ratioed_framerate)} ratioed framerate")
 
 
-                # spawn_cooldown = random.randint(fps, int(fps * 2))
                 spawn_cooldown = random.randint(int(ratioed_framerate / 2), int(ratioed_framerate))
             else:
                 ratioed_framerate = fps / (global_enemy_velocity / original_enemy_velocity)
-                # print(f"{int(ratioed_framerate)} ratioed framerate")
                 spawn_cooldown = random.randint(int(ratioed_framerate / 2), int(ratioed_framerate))
             
             spawned_enemy: EnemyVehicle = self.decide_what_enemy()
@@ -275,11 +276,19 @@ def stop_music():
     
 
 
-def display_text(screen: pygame.Surface, text: str, font_color = (255, 255, 255), x = DISPLAY_SIZE[0] // 2, y = 0 + 100):
+def display_text(screen: pygame.Surface, text: str, font_color = (255, 255, 255), x = DISPLAY_SIZE[0] // 2, y = 0 + 100, 
+                 background=None, center=True, is_big=False):
     """Display text assuming the default x and y coords are the center top of the screen"""
+    
     font = main_font
-    text_object = font.render(text, True, font_color)
-    text_rect = text_object.get_rect(center=(x, y))
+    if is_big:
+        font = main_font_big
+
+    text_object = font.render(text, True, font_color, background)
+    if center:
+        text_rect = text_object.get_rect(center=(x, y))
+    else:
+        text_rect = text_object.get_rect(topleft=(x, y))
     screen.blit(text_object, text_rect)
     
 
@@ -288,7 +297,13 @@ def start_screen():
     in_menu = True
     screen.fill((0, 0, 0))
     background_object.show(screen)
-    display_text(screen, "Press space to start", y = DISPLAY_SIZE[1] // 2)
+    display_text(screen, "Untitled Racing Game – By Thomas", background=BACKGROUND_GRAY, font_color=ORANGE, y = 20)
+    display_text(screen, "Instructions:", background=BACKGROUND_GRAY, font_color=ORANGE, y = 70)
+    display_text(screen, "Move left and right with the arrow keys and avoid", background=BACKGROUND_GRAY, font_color=ORANGE, y = 100)
+    display_text(screen, "hitting other cars. How far can you get?", background=BACKGROUND_GRAY, font_color=ORANGE, y = 130)
+
+
+    display_text(screen, "Press space to start", y = (DISPLAY_SIZE[1] // 2) - 30)
     pygame.display.update()
     while in_menu:
         for event in pygame.event.get():
@@ -302,15 +317,24 @@ def start_screen():
         clock.tick(20)
 
 
+def game_over_text():
+    display_text(screen, "Game Over", y = 20, font_color=NICE_RED, background=BACKGROUND_GRAY, is_big=True)
+
+    # Display the players score
+    display_text(screen, f"Score: {score}", y = 150, font_color=ORANGE, background=BACKGROUND_GRAY, is_big=True)
+    # Display the highscore
+    display_text(screen, f"Highscore: {highscore}", y = 200, font_color=ORANGE, background=BACKGROUND_GRAY, is_big=True)
+
+
 def death_menu():
     """Display the death menu to see if the player wants to play again"""
     in_menu = True
     screen.fill((0, 0, 0))
     background_object.show(screen)
-    # orange = (255, 165, 0)
-    display_text(screen, "Game Over", y = 20, font_color=(255, 165, 0))
-    display_text(screen, "Press [Enter] to play again or", y = 50, font_color=(255, 165, 0))
-    display_text(screen, "Press [Esc] to exit", y = 80, font_color=(255, 165, 0))
+    # orange = ORANGE
+    game_over_text()
+    display_text(screen, "Press [Enter] to play again or", y = 500, font_color=ORANGE, background=BACKGROUND_GRAY)
+    display_text(screen, "Press [Esc] to exit", y = 520, font_color=ORANGE, background=BACKGROUND_GRAY)
     pygame.display.update()
     while in_menu:
         for event in pygame.event.get():
@@ -329,7 +353,7 @@ def death_menu():
 
 # Initialize pygame and set the display caption
 pygame.init()
-pygame.display.set_caption('Test sprites!')
+pygame.display.set_caption('Car racing game by Thomas Wilson')
 screen = pygame.display.set_mode(DISPLAY_SIZE)
 
 
@@ -344,11 +368,15 @@ available_fonts = pygame.font.get_fonts()
 font_size = 30
 if "liberationmono" in available_fonts:
     main_font = pygame.font.SysFont("liberationmono", font_size)
+    main_font_big = pygame.font.SysFont("liberationmono", 60)
+
 else:
     # Handle case where Liberation Mono is not found
     print("Liberation Mono not found. Using a fallback font.")
     # Load a fallback font (e.g., pygame default font)
     main_font = pygame.font.Font(None, font_size)
+    main_font_big = pygame.font.Font(None, 60)
+
 
 
 # Defines the y upper and lower bound to give the illusion of screen wrapping for the background
@@ -392,7 +420,6 @@ clock = pygame.time.Clock()
 
 has_colided = False
 
-print(f"Y upper bound: {y_upper_bound}, Y lower bound: {y_lower_bound}")
 # Main loop
 
 
@@ -412,12 +439,13 @@ while not finished:
     enemy_spawn_cooldown = game_controller.update(screen, player_object, 
                                                   enemy_objects, enemy_spawn_cooldown)
     has_colided = game_controller.collision_detection(player_object, enemy_objects)
-    display_text(screen, f"Score: {score}", y = 20, font_color=(120, 120, 255))
+    display_text(screen, f"Score: {score}", x = 0, y = 0, font_color=(120, 120, 255), background=BACKGROUND_GRAY, center=False)
     
     score_display = highscore if score < highscore else score
     
     
-    display_text(screen, f"Highscore: {score_display}", y = 50, font_color=(120, 120, 255))
+    display_text(screen, f"Highscore: {score_display}", x = 0, y = 20, font_color=(120, 120, 255), 
+                 background=BACKGROUND_GRAY, center=False)
     
     pygame.display.update()
     if has_colided:
@@ -446,10 +474,21 @@ while not finished:
                 
                 player_image_object = pygame.transform.rotate(player_image_object, 10)          
                 screen.blit(player_image_object, (player_object.x, player_object.y))
-                display_text(screen, end_text, font_color=(255, 255, 255))
+                game_over_text()
                 pygame.display.update()
                 
                 clock.tick(animation_fps)
+
+                for event in pygame.event.get():
+        
+                    if event.type == pygame.QUIT:
+                        finished = True
+                        quit()
+
+        
+        if score > highscore:
+            highscore = score
+        
         is_play_again = death_menu()
 
         if is_play_again == False:
@@ -486,15 +525,6 @@ while not finished:
         
         if event.type == pygame.QUIT:
             finished = True
-        
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_u:
-                print(player_object.get_coords())
-                
-        
-        # For debugging purposes
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            print(event.dict["pos"])
 
 
     # When the y get to y -787

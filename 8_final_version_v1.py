@@ -302,6 +302,7 @@ def death_menu():
     """Display the death menu to see if the player wants to play again"""
     in_menu = True
     screen.fill((0, 0, 0))
+    background_object.update_background()
     background_object.show(screen)
     # orange = (255, 165, 0)
     display_text(screen, "Game Over", y = 20, font_color=(255, 165, 0))
