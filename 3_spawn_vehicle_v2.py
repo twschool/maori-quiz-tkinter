@@ -163,12 +163,11 @@ class GameController:
                 spawn_cooldown = random.randint(int(fps / 2), fps)
             
             spawned_enemy = self.decide_what_enemy()
-            lane_chosen = EnemyLanes.pick_random_lane()
+            lane_chosen_str, lane_chosen = EnemyLanes.pick_random_lane()
 
             if lane_chosen == self.previous_lane:
                 lane_chosen = EnemyLanes.pick_random_lane()
                         
-
             Enemy(spawned_enemy, lane_chosen)
             
             spawn_cooldown 
