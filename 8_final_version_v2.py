@@ -408,18 +408,22 @@ player_object = Player("blue")
 
 in_menu = False
 
+# Define sound related variables
 sound_death = pygame.mixer.Sound("other assets/goofy-crash.wav")
 sound_game = pygame.mixer.Sound("other assets/racing_music.mp3")
+
+# Initialize the game controller
 game_controller = GameController(fps)
 
 enemy_objects: list[Enemy] = []
-
+# Initialize the clock
 clock = pygame.time.Clock()
 
 has_colided = False
 
 # Main loop
 
+# Intro screen
 start_screen()
 play_music()
 
@@ -443,6 +447,8 @@ while not finished:
 
     pygame.display.update()
     if has_colided:
+        # If the player has collided with an enemy vehicle then 
+        # play death animation and prompt player to play again or exit
         sound_death.play()
         pygame.display.update()
 
@@ -461,6 +467,8 @@ while not finished:
             end_text = f"NEW HIGHSCORE: {score}"
 
         for i in range(3):
+            # Get the car to rotate 3 times and spin off the screen
+            # - Death animation
             for angle in range(0, 360, 40):
                 screen.fill((0, 0, 0))
                 background_object.show(screen)
@@ -472,6 +480,7 @@ while not finished:
 
                 clock.tick(animation_fps)
 
+                # Handle the x button being pressed
                 for event in pygame.event.get():
 
                     if event.type == pygame.QUIT:
@@ -479,6 +488,7 @@ while not finished:
                         quit()
 
         if score > highscore:
+            # Set the new highscore if needed
             highscore = score
 
         is_play_again = death_menu()
@@ -494,6 +504,7 @@ while not finished:
 
         continue
 
+    # Run the game at the given fps
     clock.tick(fps)
 
     # Movement controls
@@ -514,6 +525,6 @@ while not finished:
 
     # Event handling
     for event in pygame.event.get():
-
+        
         if event.type == pygame.QUIT:
             finished = True
