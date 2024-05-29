@@ -57,14 +57,17 @@ class EnemyLanes:
         self.lane3_x = 430
         self.lane4_x = 550
     
+    @staticmethod
     def pick_random_lane():
         """Return a random lane x coordinate"""
-        return random.choice([(1, lane1_x), (2, lane2_x), 
-                         (3, lane3_x), (4, lane4_x)])
-    
+        return random.choice (
+            [(1, lane1_x), (2, lane2_x), (3, lane3_x), (4, lane4_x)])
+
+    @staticmethod
     def lane_x_to_lane_number():
         """Return the lane number based on the x coordinate"""
         return {lane1_x: 1, lane2_x: 2, lane3_x: 3, lane4_x: 4}
+
     
 
         
