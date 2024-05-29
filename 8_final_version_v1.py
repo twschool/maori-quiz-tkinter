@@ -1,9 +1,8 @@
 """
-v2 of the game loop module
-This module will create a game loop where the game can start and end
+v1 of the final version
+This module is all of the previous modules combined into one
 
-Difficulty was added to the game loop but the spawning of the cars is still at the same interval
-This has been changed in this module
+This is a rough version more polishing will be added in the next final version
 """
 
 import random
@@ -113,7 +112,7 @@ class Enemy(Sprite):
     
     def move(self):
         """Move the enemy vehicle down the screen"""
-        self.y += global_enemy_velocity
+        self.y += global_enemy_velocity + random.uniform(0, 0.5) # Add a bit of randomness to the speed
     
     def offscreen_check(self):
         """Check if the enemy vehicle is offscreen if it is then delete it"""
@@ -284,15 +283,42 @@ def start_screen():
     """Display the start screen before the game starts"""
     in_menu = True
     screen.fill((0, 0, 0))
+    background_object.update_background()
+    background_object.show(screen)
     display_text(screen, "Press space to start", y = DISPLAY_SIZE[1] // 2)
     pygame.display.update()
-    play_music()
     while in_menu:
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     in_menu = False
                     
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+        clock.tick(20)
+
+
+def death_menu():
+    """Display the death menu to see if the player wants to play again"""
+    in_menu = True
+    screen.fill((0, 0, 0))
+    background_object.update_background()
+    background_object.show(screen)
+    # orange = (255, 165, 0)
+    display_text(screen, "Game Over", y = 20, font_color=(255, 165, 0))
+    display_text(screen, "Press [Enter] to play again or", y = 50, font_color=(255, 165, 0))
+    display_text(screen, "Press [Esc] to exit", y = 80, font_color=(255, 165, 0))
+    pygame.display.update()
+    while in_menu:
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    in_menu = False
+                    return False
+                elif event.key == pygame.K_KP_ENTER or event.key == pygame.K_RETURN:
+                    in_menu = False
+                    return True
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
@@ -372,6 +398,8 @@ print(f"Y upper bound: {y_upper_bound}, Y lower bound: {y_lower_bound}")
 
 
 start_screen()
+play_music()
+
 
 while not finished:
     
@@ -420,6 +448,18 @@ while not finished:
                 pygame.display.update()
                 
                 clock.tick(animation_fps)
+        is_play_again = death_menu()
+
+        if is_play_again == False:
+            finished = True
+        else:
+            # Prepare the game to restart
+            global_enemy_velocity = original_enemy_velocity
+            player_object = Player("blue")
+            enemy_objects.clear()
+            score = 0
+            pygame.mixer.music.stop()
+
         continue
                 
     clock.tick(fps)

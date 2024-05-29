@@ -171,7 +171,8 @@ class GameController:
             if enemy.offscreen_check():
                 if (score + 1) % 10 == 0:
                     global_enemy_velocity *= 1.2
-                    print(f"New velocity: {global_enemy_velocity}")
+                    print("Speed increased by 20%")
+                    print(f"New velocity: {int(global_enemy_velocity)}")
                 score += 1
                 enemy_objects.remove(enemy)
             else:
@@ -270,6 +271,8 @@ def start_screen():
     """Display the start screen before the game starts"""
     in_menu = True
     screen.fill((0, 0, 0))
+    background_object.update_background()
+    background_object.show(screen)
     display_text(screen, "Press space to start", y = DISPLAY_SIZE[1] // 2)
     pygame.display.update()
     while in_menu:
@@ -282,6 +285,33 @@ def start_screen():
                 pygame.quit()
                 exit()
         clock.tick(20)
+
+
+def death_menu():
+    """Display the death menu to see if the player wants to play again"""
+    in_menu = True
+    screen.fill((0, 0, 0))
+    background_object.update_background()
+    background_object.show(screen)
+    # orange = (255, 165, 0)
+    display_text(screen, "Game Over", y = 20, font_color=(255, 165, 0))
+    display_text(screen, "Press [Enter] to play again or", y = 50, font_color=(255, 165, 0))
+    display_text(screen, "Press [Esc] to exit", y = 80, font_color=(255, 165, 0))
+    pygame.display.update()
+    while in_menu:
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    in_menu = False
+                    return False
+                elif event.key == pygame.K_KP_ENTER or event.key == pygame.K_RETURN:
+                    in_menu = False
+                    return True
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+        clock.tick(20)
+
 
 
 # Initialize pygame and set the display caption
@@ -377,7 +407,6 @@ while not finished:
     pygame.display.update()
     if has_colided:
         sound_death.play()
-        finished = True
         pygame.display.update()
         
         animation_fps = 10
@@ -386,7 +415,7 @@ while not finished:
         
         # Rotate car 3 times over the space of 2 seconds
         screen.fill((0, 0, 0))
-
+        
         end_text = f"Final Score: {score}"
 
         if score > highscore:
@@ -398,6 +427,7 @@ while not finished:
         for i in range(3):
             for angle in range(0, 360, 40):
                 screen.fill((0, 0, 0))
+                background_object.show(screen)
                 
                 player_image_object = pygame.transform.rotate(player_image_object, 10)          
                 screen.blit(player_image_object, (player_object.x, player_object.y))
@@ -405,6 +435,19 @@ while not finished:
                 pygame.display.update()
                 
                 clock.tick(animation_fps)
+
+        is_play_again = death_menu()
+
+        if is_play_again == False:
+            finished = True
+        else:
+            # Prepare the game to restart
+            global_enemy_velocity = original_enemy_velocity
+            player_object = Player("blue")
+            enemy_objects.clear()
+            score = 0
+            pygame.mixer.music.stop()
+
         continue
                 
     clock.tick(fps)
