@@ -1,10 +1,6 @@
 """
-v2 of the spawn vehicle module
-A Module to spawn a enemy vehicle on the screen
-This module just works on the spawning of the enemy vehicle on the screen
-not the ai or the movement of the vehicle
-
-Things will be a lot easier now I have classes for everything
+v2 of the collision detection module
+this module will play a animation and end the game if a collision is detected
 """
 
 import random

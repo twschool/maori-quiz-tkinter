@@ -1,6 +1,9 @@
 """
-v1 of the collision detection module
-this module will just display onscreen if a collision is detected
+v2 of the game loop module
+This module will create a game loop where the game can start and end
+
+Difficulty was added to the game loop but the spawning of the cars is still at the same interval
+This has been changed in this module
 """
 
 import random
@@ -9,7 +12,7 @@ from vehicles_vars import NPCVehicle, SpecialVehicle, TruckVehicle, EnemyVehicle
 
 
 DISPLAY_SIZE = [800, 700]
-
+HIGHSCORE_FILENAME = "other assets/highscore.txt"
 
 
 
@@ -52,7 +55,7 @@ class Player(Sprite):
         self.image = image
         
         # Initiate the sprite class with the image object and x, y coords
-        super().__init__(100, 500, image, 1.25)
+        super().__init__(300, 500, image, 1.25)
         
         self.color = color
  
@@ -105,13 +108,12 @@ class Enemy(Sprite):
         super().__init__(lane_x, spawn_in_y, enemy_image)
         # self.speed = random.randint(GameController.enemy_speed_range)
         
-        self.speed = global_enemy_velocity
 
         enemy_objects.append(self)
     
     def move(self):
         """Move the enemy vehicle down the screen"""
-        self.y += self.speed
+        self.y += global_enemy_velocity
     
     def offscreen_check(self):
         """Check if the enemy vehicle is offscreen if it is then delete it"""
@@ -153,6 +155,8 @@ class GameController:
         
         """Update the game state"""
         
+        global score
+        global global_enemy_velocity
        
         player_object.show(screen)
         
@@ -161,9 +165,14 @@ class GameController:
         for enemy in enemy_objects[:]:
             enemy.move()
 
+
+
             # If the enemy is offscreen remove it from the list
             if enemy.offscreen_check():
-                print("Removed enemy")
+                if (score + 1) % 10 == 0:
+                    global_enemy_velocity *= 1.2
+                    print(f"New velocity: {global_enemy_velocity}")
+                score += 1
                 enemy_objects.remove(enemy)
             else:
                 enemy.show(screen)
@@ -175,9 +184,16 @@ class GameController:
             # Randomly decide if the player should rest
             let_player_rest = random.randint(0, 9)
             if let_player_rest == 0:
-                spawn_cooldown = random.randint(fps, int(fps * 2))
+                ratioed_framerate = fps / (global_enemy_velocity / original_enemy_velocity)
+                # print(f"{int(ratioed_framerate)} ratioed framerate")
+
+
+                # spawn_cooldown = random.randint(fps, int(fps * 2))
+                spawn_cooldown = random.randint(int(ratioed_framerate / 2), int(ratioed_framerate))
             else:
-                spawn_cooldown = random.randint(int(fps / 2), fps)
+                ratioed_framerate = fps / (global_enemy_velocity / original_enemy_velocity)
+                # print(f"{int(ratioed_framerate)} ratioed framerate")
+                spawn_cooldown = random.randint(int(ratioed_framerate / 2), int(ratioed_framerate))
             
             spawned_enemy: EnemyVehicle = self.decide_what_enemy()
             lane_chosen, lane_chosen_x = EnemyLanes.pick_random_lane()
@@ -185,13 +201,15 @@ class GameController:
             if lane_chosen == self.previous_lane:
                 # Less repetition
                 lane_chosen, lane_chosen_x = EnemyLanes.pick_random_lane()
-
-            print(f"Lane chosen: {lane_chosen}, X: {lane_chosen_x}")           
+     
             
             
              
-            if lane_chosen == self.previous_lane + 1 or lane_chosen == lane_chosen - 1:
+            if lane_chosen == self.previous_lane + 1 or lane_chosen == self.previous_lane - 1:
                 # Less chance of being softlocked
+                # If the player is going to be trapped then move the car up more to leave a gap
+                spawn_cooldown += int(fps / 3)
+                self.previous_lane = -1 # Make it so any car in any lane can spawn
                 Enemy(spawned_enemy, lane_chosen_x, spawn_in_y=-600)
             else:
                 Enemy(spawned_enemy, lane_chosen_x)
@@ -210,10 +228,7 @@ class GameController:
 
         return spawn_cooldown
 
-        # self.spawn_enemy()
-        # self.move_enemies()
-        # self.check_collision()
-    
+   
     def decide_what_enemy(self) -> EnemyVehicle:
         """Spawn an enemy vehicle on the screen"""
         
@@ -242,6 +257,20 @@ def make_background_object() -> pygame.Surface:
     return new_background_image  
 
 
+def play_music():
+    """Play music in the background"""
+    pygame.mixer.music.load("other assets/racing_music.mp3")
+    pygame.mixer.music.play(-1)
+    pygame.mixer.music.set_volume(0.5)
+    
+    return pygame.mixer.music.get_busy()
+
+
+def stop_music():
+    """Stop all music playing"""
+    pygame.mixer.music.stop()
+    
+
 
 def display_text(screen: pygame.Surface, text: str, font_color = (255, 255, 255), x = DISPLAY_SIZE[0] // 2, y = 0 + 100):
     """Display text assuming the default x and y coords are the center top of the screen"""
@@ -251,6 +280,23 @@ def display_text(screen: pygame.Surface, text: str, font_color = (255, 255, 255)
     screen.blit(text_object, text_rect)
     
 
+def start_screen():
+    """Display the start screen before the game starts"""
+    in_menu = True
+    screen.fill((0, 0, 0))
+    display_text(screen, "Press space to start", y = DISPLAY_SIZE[1] // 2)
+    pygame.display.update()
+    play_music()
+    while in_menu:
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    in_menu = False
+                    
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+        clock.tick(20)
 
 
 # Initialize pygame and set the display caption
@@ -262,12 +308,12 @@ screen = pygame.display.set_mode(DISPLAY_SIZE)
 # Main routine
 
 global_enemy_velocity = 3
+original_enemy_velocity = global_enemy_velocity
 background_image_object = make_background_object() # Used for testing purposes
 
 
 available_fonts = pygame.font.get_fonts()
 font_size = 30
-print(available_fonts)
 if "liberationmono" in available_fonts:
     main_font = pygame.font.SysFont("liberationmono", font_size)
 else:
@@ -288,6 +334,16 @@ y_upper_bound = background_image_object.get_height()
 background_object = Background()
 
 fps = 90
+score = 0
+
+try:
+    with open(HIGHSCORE_FILENAME) as highscore_file:
+        highscore = int(highscore_file.read())
+        
+except:
+    with open(HIGHSCORE_FILENAME, "w") as highscore_file:
+        highscore_file.write("0")
+        highscore = 0
 
 enemy_spawn_cooldown = fps * 2 # First enemy will spawn after 2 seconds
 last_lane_spawned_in = 0
@@ -310,6 +366,13 @@ has_colided = False
 
 print(f"Y upper bound: {y_upper_bound}, Y lower bound: {y_lower_bound}")
 # Main loop
+
+
+# Start screen - text displays (press space to start) and the when space is pressed the game loop is started
+
+
+start_screen()
+
 while not finished:
     
     
@@ -319,12 +382,45 @@ while not finished:
     enemy_spawn_cooldown = game_controller.update(screen, player_object, 
                                                   enemy_objects, enemy_spawn_cooldown)
     has_colided = game_controller.collision_detection(player_object, enemy_objects)
+    display_text(screen, f"Score: {score}", y = 20, font_color=(120, 120, 255))
+    
+    score_display = highscore if score < highscore else score
+    
+    
+    display_text(screen, f"Highscore: {score_display}", y = 50, font_color=(120, 120, 255))
     
     pygame.display.update()
     if has_colided:
-        # display_text(screen, "You have crashed!")
+        sound_death.play()
+        finished = True
         pygame.display.update()
+        
+        animation_fps = 10
+        player_image_object = player_object.image
+        
+        
+        # Rotate car 3 times over the space of 2 seconds
+        screen.fill((0, 0, 0))
 
+        end_text = f"Final Score: {score}"
+
+        if score > highscore:
+            with open(HIGHSCORE_FILENAME, "w") as file:
+                file.write(str(score))
+                
+            end_text = f"NEW HIGHSCORE: {score}"
+            
+        for i in range(3):
+            for angle in range(0, 360, 40):
+                screen.fill((0, 0, 0))
+                
+                player_image_object = pygame.transform.rotate(player_image_object, 10)          
+                screen.blit(player_image_object, (player_object.x, player_object.y))
+                display_text(screen, end_text, font_color=(255, 255, 255))
+                pygame.display.update()
+                
+                clock.tick(animation_fps)
+        continue
                 
     clock.tick(fps)
     

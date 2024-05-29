@@ -4,7 +4,8 @@ A Module to spawn a enemy vehicle on the screen
 This module just works on the spawning of the enemy vehicle on the screen
 not the ai or the movement of the vehicle
 
-Things will be a lot easier now I have classes for everything
+NOTE: Implemented enemy spawning
+TODO: Fix test cases where the player can get trapped
 """
 
 import random
