@@ -1,8 +1,12 @@
 """
-v1 of the final version
+30/05/2024 2:30 AM
+Made by: Thomas Wilson
+
+This is 
+v2 of the final version
 This module is all of the previous modules combined into one
 
-This is a rough version more polishing will be added in the next final version
+This is the polished and final version of this racing car program
 """
 
 import random

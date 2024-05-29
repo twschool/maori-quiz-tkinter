@@ -319,6 +319,11 @@ while not finished:
     enemy_spawn_cooldown = game_controller.update(screen, player_object, 
                                                   enemy_objects, enemy_spawn_cooldown)
     has_colided = game_controller.collision_detection(player_object, enemy_objects)
+
+    if has_colided:
+        display_text(screen, "You have crashed!")
+        pygame.display.update()
+        
     
     pygame.display.update()
     if has_colided:
